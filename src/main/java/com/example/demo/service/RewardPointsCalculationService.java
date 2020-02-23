@@ -1,9 +1,9 @@
 package com.example.demo.service;
 
-import com.example.demo.model.UserRewardPoints;
+import com.example.demo.model.UserDetails;
 
 public interface RewardPointsCalculationService {
 	
-	UserRewardPoints calculateRewardPoints(String id);
+	UserDetails calculateRewardPoints();
 
 }

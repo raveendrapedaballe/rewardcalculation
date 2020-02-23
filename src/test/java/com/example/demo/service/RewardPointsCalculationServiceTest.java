@@ -12,8 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.util.Assert;
 
 import com.example.demo.model.Transaction;
+import com.example.demo.model.UserDetails;
 import com.example.demo.model.UserRewardPoints;
 import com.example.demo.repository.TransactionRespository;
 import com.example.demo.service.impl.RewardPointsCalculationServiceImpl;
@@ -34,15 +36,20 @@ public class RewardPointsCalculationServiceTest {
     @BeforeEach
     void setMockOutput() {
     	
-       when(transactionRepository.findByUserId(userId)).thenReturn(getListOftransactions());
+       when(transactionRepository.findAll()).thenReturn(getListOftransactions());
     }
 
   
     @Test
     void testGet() {
-    	UserRewardPoints userRewardPoints= rewardsCalculationService.calculateRewardPoints(userId);
-        assertEquals("990", userRewardPoints.getTotalRewardPoints());
-        assertEquals("660", userRewardPoints.getRewardpoints().get(0).getPoints());
+    	UserDetails userdetails= rewardsCalculationService.calculateRewardPoints();
+    	Assert.notNull(userdetails, "userDetails is null");
+    	
+    	List<UserRewardPoints> userRewardPointslist=userdetails.getUserDetails();
+    	Assert.notEmpty(userRewardPointslist, "reward is empty");
+    	
+        assertEquals("990", userRewardPointslist.get(0).getTotalRewardPoints());
+        assertEquals("660", userRewardPointslist.get(0).getRewardpoints().get(0).getPoints());
     }
     
     private List<Transaction > getListOftransactions(){
