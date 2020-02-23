@@ -27,5 +27,9 @@ public class Transaction {
 
     @Column(nullable = false)
     private BigDecimal transactionAmount;
+    
+    Transaction(){
+    	
+    }
 
 }

@@ -23,6 +23,7 @@ import com.example.demo.service.impl.RewardPointsCalculationServiceImpl;
 public class RewardPointsCalculationServiceTest {
 
 	@Mock
+	
     private TransactionRespository transactionRepository;
 
     @InjectMocks // auto inject helloRepository
@@ -33,7 +34,7 @@ public class RewardPointsCalculationServiceTest {
     @BeforeEach
     void setMockOutput() {
     	
-        when(transactionRepository.findByUserId(userId)).thenReturn(getListOftransactions());
+       when(transactionRepository.findByUserId(userId)).thenReturn(getListOftransactions());
     }
 
   
