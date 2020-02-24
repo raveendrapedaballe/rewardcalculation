@@ -2,7 +2,6 @@ package com.example.demo.service.impl;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,10 +44,10 @@ public class RewardPointsCalculationServiceImpl implements RewardPointsCalculati
 		List<UserRewardPoints> userRewardPointsList = new ArrayList<>();
 
 		List<Transaction> transaction = (List<Transaction>) transactionRepository.findAll();
-		Map<String, Map<String, List<BigDecimal>>> transactionsUserMap = processTransactions1(transaction);
+		Map<String, Map<String, List<Transaction>>> transactionsUserMap = transformTransactions(transaction);
 
 		transactionsUserMap.forEach((k, v) -> {
-			Map<String, Long> rewardpointsMonthMap = calculateRewardForEachUser(v);
+			Map<String, Long> rewardpointsMonthMap = calculateRewardForEachMonth(v);
 			userRewardPointsList.add(transformRewardPoints(rewardpointsMonthMap, k));
 		});
 		userDetails.setUserDetails(userRewardPointsList);
@@ -85,48 +84,33 @@ public class RewardPointsCalculationServiceImpl implements RewardPointsCalculati
 	
 	
 	/**
-	 * transforms transactions per user
-	 * 
+	 * Groups transactions per month 
+	 * @param transactionamountList
+	 * @return
+	 */
+	
+	private  Map<String, List<Transaction>> calculateTotalRewardPoints1(final List<Transaction> transactionamountList) {
+		return transactionamountList
+			    .stream()
+			     .collect(Collectors.groupingBy(transaction ->transaction.getMonth()));
+	}
+	
+	
+	/**
+	 * Converts  transactions to user per month
 	 * @param transactionsList
 	 * @return
 	 */
-
-	private Map<String, Map<String, List<BigDecimal>>> processTransactions1(final List<Transaction> transactionsList) {
-
-		Map<String, Map<String, List<BigDecimal>>> transactionsUserMap = new HashMap<>();
-
-		transactionsList.forEach(transaction -> {
-
-			if (transactionsUserMap.containsKey(transaction.getUserId())) {
-				
-				Map<String, List<BigDecimal>> transactionsMapPerUser = transactionsUserMap.get(transaction.getUserId());
-				if (transactionsMapPerUser.containsKey(transaction.getMonth())) {
-
-					List<BigDecimal> originalTransactionAmoutList = transactionsMapPerUser.get(transaction.getMonth());
-					originalTransactionAmoutList.add(transaction.getTransactionAmount());
-					transactionsMapPerUser.replace(transaction.getMonth(), originalTransactionAmoutList);
-					transactionsUserMap.replace(transaction.getUserId(), transactionsMapPerUser);
-				} else {
-					List<BigDecimal> newtransactionAmountamoutList = new ArrayList<>();
-					
-					newtransactionAmountamoutList.add(transaction.getTransactionAmount());
-					transactionsMapPerUser.put(transaction.getMonth(), newtransactionAmountamoutList);
-					transactionsUserMap.put(transaction.getUserId(), transactionsMapPerUser);
-
-				}
-
-			} else {
-				
-				Map<String, List<BigDecimal>> newTransactionsMapPerUser = new HashMap<>();
-				List<BigDecimal> newtransactionAmountamoutList = new ArrayList<>();
-				newtransactionAmountamoutList.add(transaction.getTransactionAmount());
-				newTransactionsMapPerUser.put(transaction.getMonth(), newtransactionAmountamoutList);
-				transactionsUserMap.put(transaction.getUserId(), newTransactionsMapPerUser);
-			}
-
-		});
-
-		return transactionsUserMap;
+	
+	private Map<String, Map<String, List<Transaction>>>transformTransactions(final List<Transaction> transactionsList) {
+		
+		Map<String, List<Transaction>> map1=	transactionsList
+	    .stream()
+	    .collect(Collectors.groupingBy(transaction ->transaction.getUserId()));
+		
+		 return map1.entrySet().stream().collect(
+				Collectors.toMap(entry -> entry.getKey(), entry -> calculateTotalRewardPoints1(entry.getValue())));
+		
 	}
 
 	/**
@@ -136,21 +120,23 @@ public class RewardPointsCalculationServiceImpl implements RewardPointsCalculati
 	 * @return reward points for each month
 	 */
 
-	private Map<String, Long> calculateRewardForEachUser(final Map<String, List<BigDecimal>> transactionsOfMonths) {
+	private Map<String, Long> calculateRewardForEachMonth(final Map<String, List<Transaction>> transactionsOfMonths) {
 		Map<String, Long> hashMap = transactionsOfMonths.entrySet().stream().collect(
 				Collectors.toMap(entry -> entry.getKey(), entry -> calculateTotalRewardPoints(entry.getValue())));
 		return hashMap;
 	}
+	
 
 	/**
 	 * Calculates reward points for the transaction
 	 * 
-	 * @param transactionAmt
-	 *            for each transaction
+	 * @param transaction
+	 *            
 	 * @return reward points for that transaction
 	 */
 
-	private Long calculateRewardPoints(final BigDecimal transactionAmt) {
+	private Long calculateRewardPoints(final Transaction transaction) {
+		final BigDecimal transactionAmt=transaction.getTransactionAmount();
 		if (transactionAmt.compareTo(new BigDecimal(MIN_AMOUNT_ONE_REWARD)) >= 0
 				&& transactionAmt.compareTo(new BigDecimal(MIN_AMOUNT_TWO_REWARD)) <= 0) {
 			return transactionAmt.subtract(new BigDecimal(MIN_AMOUNT_ONE_REWARD)).longValue();
@@ -163,7 +149,7 @@ public class RewardPointsCalculationServiceImpl implements RewardPointsCalculati
 	}
 
 	/**
-	 * takes transaction amounts per month and returns total reward points for that
+	 * takes transactions per month and returns total reward points for that
 	 * month
 	 * 
 	 * @param transactionamountList
@@ -171,9 +157,9 @@ public class RewardPointsCalculationServiceImpl implements RewardPointsCalculati
 	 * @return total reward points
 	 */
 
-	private long calculateTotalRewardPoints(final List<BigDecimal> transactionamountList) {
-		return transactionamountList.stream().mapToLong((transactionAmt) -> {
-			return calculateRewardPoints(transactionAmt);
+	private long calculateTotalRewardPoints(final List<Transaction> transactionList) {
+		return transactionList.stream().mapToLong((transaction) -> {
+			return calculateRewardPoints(transaction);
 		}).sum();
 	}
 
