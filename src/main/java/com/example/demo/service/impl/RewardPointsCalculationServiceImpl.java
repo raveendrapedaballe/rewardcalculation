@@ -83,17 +83,6 @@ public class RewardPointsCalculationServiceImpl implements RewardPointsCalculati
 	}
 	
 	
-	/**
-	 * Groups transactions per month 
-	 * @param transactionamountList
-	 * @return
-	 */
-	
-	private  Map<String, List<Transaction>> calculateTotalRewardPoints1(final List<Transaction> transactionamountList) {
-		return transactionamountList
-			    .stream()
-			     .collect(Collectors.groupingBy(transaction ->transaction.getMonth()));
-	}
 	
 	
 	/**
@@ -104,12 +93,12 @@ public class RewardPointsCalculationServiceImpl implements RewardPointsCalculati
 	
 	private Map<String, Map<String, List<Transaction>>>transformTransactions(final List<Transaction> transactionsList) {
 		
-		Map<String, List<Transaction>> map1=	transactionsList
+		Map<String, List<Transaction>> userTransactionsMap=	transactionsList
 	    .stream()
 	    .collect(Collectors.groupingBy(transaction ->transaction.getUserId()));
 		
-		 return map1.entrySet().stream().collect(
-				Collectors.toMap(entry -> entry.getKey(), entry -> calculateTotalRewardPoints1(entry.getValue())));
+		 return userTransactionsMap.entrySet().stream().collect(
+				Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue().stream(). collect(Collectors.groupingBy(transaction ->transaction.getMonth()))));
 		
 	}
 
